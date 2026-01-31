@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Sản Phẩm</title>
+    <meta name="referrer" content="no-referrer">
+    <title>Dashboard Hover Description</title>
     
     <link rel="stylesheet" href="style.css">
 </head>
@@ -11,69 +12,155 @@
 
     <h1>QUẢN LÝ SẢN PHẨM</h1>
 
+    <div class="search-container">
+        <input type="text" id="search-input" placeholder="🔍 Tìm kiếm..." oninput="handleSearch()">
+    </div>
+
     <table>
         <thead>
             <tr>
                 <th width="50">ID</th>
-                <th width="120">Hình ảnh</th>
-                <th width="20%">Tên sản phẩm</th>
-                <th width="10%">Giá</th>
-                <th>Mô tả</th>
+                <th width="100">Hình ảnh</th>
+                <th class="sortable" onclick="handleSort('title')">Tên sản phẩm <span id="icon-title" class="sort-icon">⇅</span></th>
+                <th class="sortable" onclick="handleSort('price')">Giá <span id="icon-price" class="sort-icon">⇅</span></th>
+                
+                <th width="80">Chi tiết</th> 
             </tr>
         </thead>
-        <tbody id="table-body">
-            <tr>
-                <td colspan="5" style="text-align: center;">Đang tải dữ liệu...</td>
-            </tr>
-        </tbody>
+        <tbody id="table-body"></tbody>
     </table>
 
+    <div class="pagination-container" id="pagination">
+        <button class="btn-page" onclick="changePage(-1)" id="btn-prev">❮ Trước</button>
+        <span id="page-info">Trang 1</span>
+        <button class="btn-page" onclick="changePage(1)" id="btn-next">Sau ❯</button>
+    </div>
+
     <script>
+        // ... (Giữ nguyên các biến và hàm loadData, handleSort, handleSearch cũ) ...
         const API_URL = 'https://api.escuelajs.co/api/v1/products';
+        const FALLBACK_IMAGE = 'https://placehold.co/100x100?text=No+Img';
+        
+        let allProducts = [];      
+        let filteredProducts = []; 
+        let currentPage = 1;       
+        const rowsPerPage = 10;    
+        let currentSort = { column: null, direction: 'default' };
+
+        // --- Copy lại toàn bộ logic cũ, CHỈ SỬA HÀM renderTable ---
 
         async function loadData() {
+            /* Giữ nguyên logic cũ */
             const tableBody = document.getElementById('table-body');
-
             try {
-                // Gọi API
                 const response = await fetch(API_URL);
-                const products = await response.json();
-
-                // Xóa thông báo loading
-                tableBody.innerHTML = '';
-
-                // Render dữ liệu
-                products.forEach(product => {
-                    // Xử lý link ảnh lỗi/thừa ký tự
-                    let imgUrl = "https://via.placeholder.com/100?text=No+Image";
-                    if (product.images && product.images.length > 0) {
-                        let raw = product.images[0];
-                        imgUrl = raw.replace(/[\[\]"]/g, ''); 
-                    }
-
-                    const row = `
-                        <tr>
-                            <td>${product.id}</td>
-                            <td>
-                                <img src="${imgUrl}" class="product-img" alt="${product.title}">
-                            </td>
-                            <td><strong>${product.title}</strong></td>
-                            <td class="price-tag">$${product.price}</td>
-                            <td>${product.description}</td>
-                        </tr>
-                    `;
-                    tableBody.innerHTML += row;
-                });
-
-            } catch (error) {
-                console.error(error);
-                tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: red;">Lỗi kết nối: ${error.message}</td></tr>`;
-            }
+                const data = await response.json();
+                allProducts = data;
+                filteredProducts = [...data];
+                updateView();
+            } catch (error) { console.error(error); }
         }
 
-        // Tự động chạy khi mở trang
+        function updateView() {
+            /* Giữ nguyên logic cũ */
+            const startIndex = (currentPage - 1) * rowsPerPage;
+            const endIndex = startIndex + rowsPerPage;
+            const pageData = filteredProducts.slice(startIndex, endIndex);
+            renderTable(pageData);
+            renderPaginationControls();
+        }
+
+        // --- ĐÂY LÀ HÀM CẦN SỬA ---
+        function renderTable(productList) {
+            const tableBody = document.getElementById('table-body');
+            
+            if (productList.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Không tìm thấy dữ liệu!</td></tr>';
+                return;
+            }
+
+            tableBody.innerHTML = '';
+
+            productList.forEach(product => {
+                // Logic xử lý ảnh (Giữ nguyên)
+                let imgUrl = FALLBACK_IMAGE;
+                if (product.images?.length > 0) {
+                    let rawImg = product.images[0];
+                    if (typeof rawImg === 'string' && rawImg.startsWith('["')) {
+                        try { imgUrl = JSON.parse(rawImg)[0] || FALLBACK_IMAGE; } catch (e) { imgUrl = rawImg.replace(/[\[\]"]/g, ''); }
+                    } else { imgUrl = rawImg.replace(/[\[\]"]/g, ''); }
+                }
+
+                const row = `
+                    <tr>
+                        <td>${product.id}</td>
+                        <td>
+                            <img src="${imgUrl}" class="product-img" alt="img" 
+                                 onerror="this.onerror=null; this.src='${FALLBACK_IMAGE}';">
+                        </td>
+                        <td><strong>${product.title}</strong></td>
+                        <td class="price-tag">$${product.price}</td>
+                        
+                        <td align="center">
+                            <div class="tooltip-container">
+                                <span class="tooltip-trigger">📜</span>
+                                
+                                <div class="tooltip-content">
+                                    <strong>Mô tả chi tiết:</strong><br>
+                                    ${product.description}
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                tableBody.innerHTML += row;
+            });
+        }
+
+        /* ... Giữ nguyên các hàm handleSort, handleSearch, pagination còn lại ... */
+        function handleSort(column) { /* Logic cũ */ 
+            if (currentSort.column === column) {
+                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort.column = column;
+                currentSort.direction = 'asc';
+            }
+            if (column === 'price') {
+                filteredProducts.sort((a, b) => currentSort.direction === 'asc' ? a.price - b.price : b.price - a.price);
+            } else if (column === 'title') {
+                filteredProducts.sort((a, b) => currentSort.direction === 'asc' ? a.title.localeCompare(b.title) : b.title.localeCompare(a.title));
+            }
+            currentPage = 1;
+            updateSortIcons(column, currentSort.direction);
+            updateView();
+        }
+        
+        function updateSortIcons(column, direction) { /* Logic cũ */
+             document.querySelectorAll('.sort-icon').forEach(el => el.innerText = '⇅');
+             document.querySelectorAll('.sortable').forEach(th => th.classList.remove('active'));
+             const icon = document.getElementById('icon-' + column);
+             if(icon) {
+                 icon.innerText = direction === 'asc' ? '▲' : '▼';
+                 icon.parentElement.classList.add('active');
+             }
+        }
+
+        function handleSearch() { /* Logic cũ */
+             const keyword = document.getElementById('search-input').value.toLowerCase();
+             filteredProducts = allProducts.filter(p => p.title.toLowerCase().includes(keyword));
+             currentPage = 1;
+             updateView();
+        }
+
+        function changePage(d) { currentPage += d; updateView(); }
+        function renderPaginationControls() { /* Logic cũ */
+            const total = Math.ceil(filteredProducts.length / rowsPerPage) || 1;
+            document.getElementById('page-info').innerText = `Trang ${currentPage} / ${total}`;
+            document.getElementById('btn-prev').disabled = currentPage === 1;
+            document.getElementById('btn-next').disabled = currentPage === total;
+        }
+
         loadData();
     </script>
-
 </body>
 </html>

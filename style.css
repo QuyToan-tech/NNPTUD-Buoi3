@@ -1,0 +1,78 @@
+/* style.css */
+
+/* 1. Cấu hình chung */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 20px;
+    background-color: #f4f4f4;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+}
+
+/* 2. Cấu trúc bảng */
+table {
+    width: 100%;
+    border-collapse: collapse; /* Gộp đường viền */
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    background-color: white;
+}
+
+th, td {
+    padding: 15px;
+    vertical-align: middle; /* Căn giữa theo chiều dọc */
+    text-align: left;
+}
+
+/* Header của bảng */
+thead th {
+    background-color: #333;
+    color: #ffffff;
+    text-transform: uppercase;
+    font-size: 14px;
+    border-bottom: 3px solid #000;
+}
+
+/* 3. Hiệu ứng sọc (Zebra Striping) - Đen/Trắng */
+
+/* Dòng lẻ: Nền trắng, chữ đen */
+tbody tr:nth-child(odd) {
+    background-color: #ffffff;
+    color: #000000;
+}
+
+/* Dòng chẵn: Nền đen, chữ trắng */
+tbody tr:nth-child(even) {
+    background-color: #000000;
+    color: #ffffff;
+}
+
+/* Hiệu ứng hover (khi di chuột vào dòng) */
+tbody tr:hover {
+    opacity: 0.9;
+    cursor: pointer;
+}
+
+/* 4. Định dạng hình ảnh */
+.product-img {
+    width: 100px;  
+    height: 100px;
+    /* Hiển thị toàn bộ hình ảnh, không bị cắt, thêm khoảng trắng nếu tỷ lệ không khớp */
+    object-fit: contain; 
+    background-color: #fff; /* Nền trắng cho khung ảnh để nổi bật trên nền đen */
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    display: block;
+}
+
+/* 5. Định dạng cột giá tiền */
+.price-tag {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+/* Màu giá tiền: Nếu nền đen thì chữ vàng, nền trắng thì chữ đỏ (Optional) */
+tbody tr:nth-child(even) .price-tag { color: #f1c40f; } /* Vàng trên nền đen */
+tbody tr:nth-child(odd) .price-tag { color: #e74c3c; }  /* Đỏ trên nền trắng */

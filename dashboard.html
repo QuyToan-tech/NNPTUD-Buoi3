@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Sản Phẩm</title>
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <h1>QUẢN LÝ SẢN PHẨM</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th width="50">ID</th>
+                <th width="120">Hình ảnh</th>
+                <th width="20%">Tên sản phẩm</th>
+                <th width="10%">Giá</th>
+                <th>Mô tả</th>
+            </tr>
+        </thead>
+        <tbody id="table-body">
+            <tr>
+                <td colspan="5" style="text-align: center;">Đang tải dữ liệu...</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script>
+        const API_URL = 'https://api.escuelajs.co/api/v1/products';
+
+        async function loadData() {
+            const tableBody = document.getElementById('table-body');
+
+            try {
+                // Gọi API
+                const response = await fetch(API_URL);
+                const products = await response.json();
+
+                // Xóa thông báo loading
+                tableBody.innerHTML = '';
+
+                // Render dữ liệu
+                products.forEach(product => {
+                    // Xử lý link ảnh lỗi/thừa ký tự
+                    let imgUrl = "https://via.placeholder.com/100?text=No+Image";
+                    if (product.images && product.images.length > 0) {
+                        let raw = product.images[0];
+                        imgUrl = raw.replace(/[\[\]"]/g, ''); 
+                    }
+
+                    const row = `
+                        <tr>
+                            <td>${product.id}</td>
+                            <td>
+                                <img src="${imgUrl}" class="product-img" alt="${product.title}">
+                            </td>
+                            <td><strong>${product.title}</strong></td>
+                            <td class="price-tag">$${product.price}</td>
+                            <td>${product.description}</td>
+                        </tr>
+                    `;
+                    tableBody.innerHTML += row;
+                });
+
+            } catch (error) {
+                console.error(error);
+                tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: red;">Lỗi kết nối: ${error.message}</td></tr>`;
+            }
+        }
+
+        // Tự động chạy khi mở trang
+        loadData();
+    </script>
+
+</body>
+</html>
